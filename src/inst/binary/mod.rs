@@ -103,7 +103,7 @@ fn try_read_rdrr(bits: u16) -> Option<Instruction> {
     let opcode = (bits & 0b1111110000000000) >> 10;
 
     let rd = ((bits & 0b0000000111110000) >> 4) as u8;
-    let rr = (((bits & 0b0000001000000000) >> 4) | (bits & 0b0000000000001111)) as u8;
+    let rr = (((bits & 0b0000001000000000) >> 5) | (bits & 0b0000000000001111)) as u8;
 
     match opcode {
         0b000011 => Some(Instruction::Add(rd, rr)),
