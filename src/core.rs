@@ -98,17 +98,17 @@ impl Core {
         let carry = self.register_file.sreg_flag(sreg::CARRY_FLAG);
         let constant = if carry { 1 } else { 0 };
 
-        let diff = self.do_rdrr(lhs, rhs, |a, b| a - b - constant)?;
+        let diff = self.do_rdrr(lhs, rhs, |a, b| a.wrapping_sub(b).wrapping_sub(constant))?;
         self.update_sreg_arithmetic(diff)
     }
 
     pub fn subi(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
-        let diff = self.do_rdi(rd, |d| d - imm as u16)?;
+        let diff = self.do_rdi(rd, |d| d.wrapping_sub(imm as _))?;
         self.update_sreg_arithmetic(diff)
     }
 
     pub fn sbci(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
-        let diff = self.do_rdi(rd, |d| d - imm as u16)?;
+        let diff = self.do_rdi(rd, |d| d.wrapping_sub(imm as _))?;
         self.update_sreg_arithmetic(diff)
     }
 
