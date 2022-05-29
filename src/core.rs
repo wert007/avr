@@ -22,7 +22,7 @@ pub struct Core {
     memory: mem::Space,
 
     /// The program counter.
-    pc: u32,
+    pub pc: u32,
 }
 
 impl Core {
