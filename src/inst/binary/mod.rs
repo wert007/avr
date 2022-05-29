@@ -53,6 +53,7 @@ fn try_read16(bits: u16) -> Option<Instruction> {
         .or_else(|| self::try_read_std_ldd(bits))
         .or_else(|| self::try_read_movw(bits))
         .or_else(|| self::try_read_relcondbr(bits))
+        .or_else(|| self::try_read_adiw(bits))
 }
 
 pub fn try_read32(bits: u32) -> Option<Instruction> {
@@ -324,6 +325,20 @@ fn try_read_relcondbr(bits: u16) -> Option<Instruction> {
         0b1111_0100_0000_0110 => Some(Instruction::Brtc(k)),
         0b1111_0000_0000_0011 => Some(Instruction::Brvs(k)),
         0b1111_0100_0000_0011 => Some(Instruction::Brvc(k)),
+        _ => None,
+    }
+}
+
+/// ADIW: 1001 0110 KKdd KKKK
+fn try_read_adiw(bits: u16) -> Option<Instruction> {
+    let opcode = bits >> 8;
+    let k = (bits >> 6) & 0b11 | bits & 0b1111;
+    let k = k as u8;
+    let d = (bits >> 3) & 0b110;
+    let d = d as u8 + 24;
+
+    match opcode {
+        0b1001_0110 => Some(Instruction::Adiw(d, k)),
         _ => None,
     }
 }

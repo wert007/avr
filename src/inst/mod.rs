@@ -30,6 +30,7 @@ pub enum Instruction {
     Ori(Gpr, u8),
     Cpi(Gpr, u8),
     Ldi(Gpr, u8),
+    Adiw(Gpr, u8),
 
     Add(Gpr, Gpr),
     Adc(Gpr, Gpr),

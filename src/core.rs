@@ -80,6 +80,13 @@ impl Core {
         self.update_sreg_arithmetic(sum)
     }
 
+    /// lhs = lhs + rhs
+    pub fn adiw(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
+        let val = self.register_file.gpr_pair_val(rd)? + imm as u16;
+        self.register_file.set_gpr_pair(rd, val);
+        self.update_sreg_arithmetic(val)
+    }
+
     pub fn adc(&mut self, lhs: u8, rhs: u8) -> Result<(), Error> {
         let carry = self.register_file.sreg_flag(sreg::CARRY_FLAG);
         let constant = if carry { 1 } else { 0 };
@@ -471,6 +478,7 @@ impl Core {
             Instruction::Cpi(rd, k) => self.cpi(rd, k),
             Instruction::Ldi(rd, k) => self.ldi(rd, k),
             Instruction::Add(rd, rr) => self.add(rd, rr),
+            Instruction::Adiw(rd, k) => self.adiw(rd, k),
             Instruction::Adc(rd, rr) => self.adc(rd, rr),
             Instruction::Sub(rd, rr) => self.sub(rd, rr),
             Instruction::Sbc(rd, rr) => self.sbc(rd, rr),
