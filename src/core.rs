@@ -574,8 +574,8 @@ impl Core {
         let rd_val = (rd_val_hi << 8) | rd_val_lo;
 
         let val = f(rd_val, rr_val);
-        let val_lo = val & 0x0f;
-        let val_hi = (val & 0xf0) >> 8;
+        let val_lo = val & 0xff;
+        let val_hi = (val & 0xff00) >> 8;
 
         *self.register_file.gpr_mut(rd).unwrap() = val_lo as u8;
         *self.register_file.gpr_mut(rd + 1).unwrap() = val_hi as u8;
