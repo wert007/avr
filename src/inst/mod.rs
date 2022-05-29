@@ -85,6 +85,8 @@ pub enum Instruction {
     Std(GprPair, u8, Gpr),
     Ldd(Gpr, GprPair, u8),
 
+    Sts(Gpr, u16),
+    Lds(Gpr, u16),
     /// Load program memory.
     /// `GprPair` is always the `Z` register.
     /// The `bool` is whether to postincrement.
@@ -102,6 +104,8 @@ impl Instruction {
         match self {
             Instruction::Jmp(..) => 4,
             Instruction::Call(..) => 4,
+            Instruction::Sts(..) => 4,
+            Instruction::Lds(..) => 4,
             _ => 2,
         }
     }

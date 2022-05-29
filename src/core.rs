@@ -391,6 +391,21 @@ impl Core {
         Ok(())
     }
 
+    pub fn sts(&mut self, rd: u8, k: u16) -> Result<(), Error> {
+        let value = self.register_file.gpr(rd).expect("Could not find register");
+        self.memory.set_u8(k as usize, value)?;
+        Ok(())
+    }
+
+    pub fn lds(&mut self, rd: u8, k: u16) -> Result<(), Error> {
+        let value = self.memory().get_u8(k as usize)?;
+        *self
+            .register_file
+            .gpr_mut(rd)
+            .expect("Could not find register") = value;
+        Ok(())
+    }
+
     pub fn nop(&mut self) -> Result<(), Error> {
         Ok(())
     }
@@ -534,6 +549,8 @@ impl Core {
             Instruction::Brvc(k) => self.brvc(k),
             Instruction::Brie(k) => self.brie(k),
             Instruction::Brid(k) => self.brid(k),
+            Instruction::Sts(rd, k) => self.sts(rd, k),
+            Instruction::Lds(rd, k) => self.lds(rd, k),
             Instruction::Lpm(rd, z, postinc) => self.lpm(rd, z, postinc),
             Instruction::St(ptr, reg, variant) => self.st(ptr, reg, variant),
             Instruction::Std(ptr, imm, reg) => self.std(ptr, imm, reg),

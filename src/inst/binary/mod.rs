@@ -54,7 +54,7 @@ fn try_read16(bits: u16) -> Option<Instruction> {
 }
 
 pub fn try_read32(bits: u32) -> Option<Instruction> {
-    self::try_read_k32(bits)
+    self::try_read_k32(bits).or_else(|| self::try_read_lds_sts(bits))
 }
 
 /// rd: `<|opcode|fffd|dddd|ffff|>`.
@@ -209,6 +209,21 @@ fn try_read_k32(bits: u32) -> Option<Instruction> {
     match subopcode {
         0b110 => Some(Instruction::Jmp(k)),
         0b111 => Some(Instruction::Call(k)),
+        _ => None,
+    }
+}
+
+/// Attempts to read an `LDS` or `STS` instruction.
+fn try_read_lds_sts(bits: u32) -> Option<Instruction> {
+    let immediate = (bits & 0xFFFF) as u16;
+    let upper_half = (bits >> 16) as u16;
+    let opcode = ((upper_half >> 5) & 0b11111110000) | (upper_half & 0b1111);
+
+    let register = ((upper_half >> 4) & 0b11111) as u8;
+
+    match opcode {
+        0b10010000000 => Some(Instruction::Lds(register, immediate)),
+        0b10010010000 => Some(Instruction::Sts(register, immediate)),
         _ => None,
     }
 }
