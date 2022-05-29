@@ -6,19 +6,16 @@ pub type Address = u32;
 pub type RelativeAddress = u32;
 pub type RelativeAddress7 = i8;
 
-#[derive(Copy,Clone,Debug,PartialEq,Eq)]
-pub enum Variant
-{
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum Variant {
     Normal,
     Predecrement,
     Postincrement,
 }
 
-
 /// An instruction.
-#[derive(Copy,Clone,Debug,PartialEq,Eq)]
-pub enum Instruction
-{
+#[derive(Copy, Clone, Debug, PartialEq, Eq)]
+pub enum Instruction {
     Inc(Gpr),
     Dec(Gpr),
     Com(Gpr),
@@ -97,8 +94,7 @@ pub enum Instruction
     Reti,
 }
 
-impl Instruction
-{
+impl Instruction {
     pub fn size(self) -> u8 {
         match self {
             Instruction::Jmp(..) => 4,
@@ -106,6 +102,4 @@ impl Instruction
             _ => 2,
         }
     }
-
 }
-

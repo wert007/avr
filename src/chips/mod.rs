@@ -1,11 +1,10 @@
 pub mod atmega328p;
 
-use regs::{RegisterFile,Register};
-use io;
+use crate::io;
+use crate::regs::{Register, RegisterFile};
 
 /// A microcontroller.
-pub trait Chip
-{
+pub trait Chip {
     fn register_file() -> RegisterFile {
         let mut file = Vec::new();
 
@@ -17,7 +16,7 @@ pub trait Chip
             });
         }
 
-        let memory_end = Self::memory_size()-1;
+        let memory_end = Self::memory_size() - 1;
         let memory_size_hi = memory_end & 0x00ff;
         let memory_size_lo = (memory_end & 0xff00) >> 8;
 

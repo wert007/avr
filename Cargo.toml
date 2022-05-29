@@ -1,5 +1,5 @@
 [package]
-
+edition = "2021"
 name = "avr"
 version = "0.0.3"
 authors = ["Dylan McKay <me@dylanmckay.io>"]

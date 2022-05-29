@@ -1,17 +1,15 @@
-use {Core, Error};
-use addons;
+use crate::addons;
+use crate::{Core, Error};
 
-pub struct Mcu
-{
+pub struct Mcu {
     pub core: Core,
     addons: Vec<Box<dyn addons::Addon>>,
 }
 
-impl Mcu
-{
+impl Mcu {
     pub fn new(core: Core) -> Self {
         Mcu {
-            core: core,
+            core,
             addons: Vec::new(),
         }
     }

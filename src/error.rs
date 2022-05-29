@@ -1,11 +1,7 @@
 /// An error on the AVR.
 #[derive(Debug)]
-pub enum Error
-{
+pub enum Error {
     UnknownInstruction,
     StackOverflow,
-    SegmentationFault {
-        address: usize,
-    },
+    SegmentationFault { address: usize },
 }
-

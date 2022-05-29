@@ -1,23 +1,24 @@
-use {Instruction, Error};
-use {inst, math};
+use crate::{inst, math};
+use crate::{Error, Instruction};
 
 pub fn read<I>(mut bytes: I) -> Result<Instruction, Error>
-    where I: Iterator<Item=u8> {
-
+where
+    I: Iterator<Item = u8>,
+{
     let b1 = bytes.next().unwrap();
     let b2 = bytes.next().unwrap();
 
     // must reverse endianess
-    let bits16 = ((b2 as u16)<<8) | (b1 as u16);
+    let bits16 = ((b2 as u16) << 8) | (b1 as u16);
 
     if let Some(i) = self::try_read16(bits16) {
-         return Ok(i);
+        return Ok(i);
     }
 
     let b3 = bytes.next().unwrap() as u32;
     let b4 = bytes.next().unwrap() as u32;
     // must reverse endianess
-    let bits32 = ((bits16 as u32) << 16) | (b4<<8) | (b3<<0);
+    let bits32 = ((bits16 as u32) << 16) | (b4 << 8) | b3;
 
     if let Some(i) = self::try_read32(bits32) {
         return Ok(i);
@@ -27,7 +28,7 @@ pub fn read<I>(mut bytes: I) -> Result<Instruction, Error>
 }
 
 fn try_read16(bits: u16) -> Option<Instruction> {
-    if bits == 0 {
+    let result = if bits == 0 {
         Some(Instruction::Nop)
     } else if bits == 0x9508 {
         Some(Instruction::Ret)
@@ -36,45 +37,31 @@ fn try_read16(bits: u16) -> Option<Instruction> {
     } else if bits == 0x95C8 {
         // LPM (r0, Z implied).
         Some(Instruction::Lpm(0, 30, false))
-    } else if let Some(i) = self::try_read_rd(bits) {
-        Some(i)
-    } else if let Some(i) = self::try_read_rdk(bits) {
-        Some(i)
-    } else if let Some(i) = self::try_read_rdrr(bits) {
-        Some(i)
-    } else if let Some(i) = self::try_read_rda(bits) {
-        Some(i)
-    } else if let Some(i) = self::try_read_io_ab(bits) {
-        Some(i)
-    } else if let Some(i) = self::try_read_rdz(bits) {
-        Some(i)
-    } else if let Some(i) = self::try_read_k16(bits) {
-        Some(i)
-    } else if let Some(i) = self::try_read_st_ld(bits) {
-        Some(i)
-    } else if let Some(i) = self::try_read_std_ldd(bits) {
-        Some(i)
-    } else if let Some(i) = self::try_read_movw(bits) {
-        Some(i)
-    } else if let Some(i) = self::try_read_relcondbr(bits) {
-        Some(i)
     } else {
         None
-    }
+    };
+
+    result
+        .or_else(|| self::try_read_rd(bits))
+        .or_else(|| self::try_read_rdk(bits))
+        .or_else(|| self::try_read_rdrr(bits))
+        .or_else(|| self::try_read_rda(bits))
+        .or_else(|| self::try_read_io_ab(bits))
+        .or_else(|| self::try_read_rdz(bits))
+        .or_else(|| self::try_read_k16(bits))
+        .or_else(|| self::try_read_st_ld(bits))
+        .or_else(|| self::try_read_std_ldd(bits))
+        .or_else(|| self::try_read_movw(bits))
+        .or_else(|| self::try_read_relcondbr(bits))
 }
 
 pub fn try_read32(bits: u32) -> Option<Instruction> {
-    if let Some(i) = self::try_read_k32(bits) {
-        Some(i)
-    } else {
-        None
-    }
+    self::try_read_k32(bits)
 }
 
 /// rd: `<|opcode|fffd|dddd|ffff|>`.
 fn try_read_rd(bits: u16) -> Option<Instruction> {
-    let opcode = ((bits & 0b1111111000000000) >> 5) |
-                  (bits & 0b0000000000001111);
+    let opcode = ((bits & 0b1111111000000000) >> 5) | (bits & 0b0000000000001111);
 
     let rd = ((bits & 0b0000000111110000) >> 4) as u8;
 
@@ -95,8 +82,7 @@ fn try_read_rdk(bits: u16) -> Option<Instruction> {
     let opcode = (bits & 0b1111000000000000) >> 12;
 
     let mut rd = ((bits & 0b0000000011110000) >> 4) as u8;
-    let k     =  (((bits & 0b0000111100000000) >> 4) |
-                  ((bits & 0b0000000000001111) >> 0)) as u8;
+    let k = (((bits & 0b0000111100000000) >> 4) | bits & 0b0000000000001111) as u8;
 
     // RDk registers start from r16 (so range is r16-r31).
     rd += 16;
@@ -117,8 +103,7 @@ fn try_read_rdrr(bits: u16) -> Option<Instruction> {
     let opcode = (bits & 0b1111110000000000) >> 10;
 
     let rd = ((bits & 0b0000000111110000) >> 4) as u8;
-    let rr = (((bits & 0b0000001000000000) >> 4) |
-              (bits & 0b0000000000001111)) as u8;
+    let rr = (((bits & 0b0000001000000000) >> 4) | (bits & 0b0000000000001111)) as u8;
 
     match opcode {
         0b000011 => Some(Instruction::Add(rd, rr)),
@@ -145,8 +130,7 @@ fn try_read_rda(bits: u16) -> Option<Instruction> {
     let subopcode = (bits & 0b100000000000) >> 11;
 
     let reg = ((0b111110000 & bits) >> 4) as u8;
-    let a = (((0b11000000000 & bits) >> 5) |
-             ((0b1111 & bits) >> 0)) as u8;
+    let a = (((0b11000000000 & bits) >> 5) | (0b1111 & bits)) as u8;
 
     if opcode != 0b1011 {
         return None;
@@ -157,7 +141,6 @@ fn try_read_rda(bits: u16) -> Option<Instruction> {
         0b1 => Some(Instruction::Out(a, reg)),
         _ => None,
     }
-
 }
 
 /// CBI: 1001 1000 AAAA Abbb
@@ -183,7 +166,7 @@ fn try_read_rdz(bits: u16) -> Option<Instruction> {
 
     let rd = ((bits & 0x1f0) >> 4) as u8;
 
-    let postinc = sub_op==1;
+    let postinc = sub_op == 1;
 
     match opcode {
         0b1001000 => Some(Instruction::Lpm(rd, 30, postinc)),
@@ -210,8 +193,7 @@ fn try_read_k32(bits: u32) -> Option<Instruction> {
     let opcode = (bits & 0xfe000000) >> 25;
     let subopcode = (bits & 0xe0000) >> 17;
 
-    let mut k = ((bits & 0x1f00000) >> 20) |
-                 (bits & 0x1ffff);
+    let mut k = ((bits & 0x1f00000) >> 20) | (bits & 0x1ffff);
 
     // un-left shift the address.
     k <<= 1;
@@ -267,11 +249,11 @@ fn try_read_st_ld(bits: u16) -> Option<Instruction> {
 fn try_read_std_ldd(bits: u16) -> Option<Instruction> {
     let opcode = (bits & 0b1101_0000_0000_0000) >> 12;
 
-    let f = (bits & 0b0000_00010_0000_0000) >> 9;
+    let f = (bits & 0b0000_0010_0000_0000) >> 9;
     let p = (bits & 0b1000) >> 3;
-    let q = ((bits & 0b0010_0000_0000_0000) >> 7) |
-            ((bits & 0b0000_1100_0000_0000) >> 6) |
-            ((bits & 0b0000_0000_0000_0111) >> 0);
+    let q = ((bits & 0b0010_0000_0000_0000) >> 7)
+        | ((bits & 0b0000_1100_0000_0000) >> 6)
+        | (bits & 0b0000_0000_0000_0111);
 
     let reg = ((bits & 0b1_1111_0000) >> 4) as u8;
     let imm = q as u8;
@@ -297,11 +279,12 @@ fn try_read_movw(bits: u16) -> Option<Instruction> {
     let opcode = (bits & 0xff00) >> 8;
 
     let mut rd = (bits & 0x00f0) >> 4;
-    let mut rr = (bits & 0x000f) >> 0;
+    let mut rr = bits & 0x000f;
 
     // Because all registers are pairs, the last bit is always 0
     // so it is always encoded by right shifting by one.
-    rd <<= 1; rr <<= 1;
+    rd <<= 1;
+    rr <<= 1;
 
     if opcode != 0b00000001 {
         return None;
@@ -338,4 +321,3 @@ fn try_read_relcondbr(bits: u16) -> Option<Instruction> {
         _ => None,
     }
 }
-

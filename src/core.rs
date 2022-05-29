@@ -1,9 +1,9 @@
-use Error;
-use regs::{self, RegisterFile};
-use sreg;
-use mem;
-use chips::Chip;
-use inst;
+use crate::chips::Chip;
+use crate::inst;
+use crate::mem;
+use crate::regs::{self, RegisterFile};
+use crate::sreg;
+use crate::Error;
 
 /// The address that register space is mapped to in SRAM.
 pub const SRAM_REGISTER_OFFSET: u16 = 0;
@@ -15,8 +15,7 @@ pub const SRAM_DATA_OFFSET: u16 = 0x60;
 pub const PTR_SIZE: u16 = 2;
 
 /// The AVR CPU.
-pub struct Core
-{
+pub struct Core {
     register_file: RegisterFile,
 
     program_space: mem::Space,
@@ -26,10 +25,10 @@ pub struct Core
     pc: u32,
 }
 
-impl Core
-{
+impl Core {
     pub fn new<M>() -> Self
-        where M: Chip
+    where
+        M: Chip,
     {
         Core {
             register_file: M::register_file(),
@@ -41,8 +40,9 @@ impl Core
     }
 
     pub fn load_program_space<I>(&mut self, bytes: I)
-        where I: Iterator<Item=u8> {
-
+    where
+        I: Iterator<Item = u8>,
+    {
         self.program_space.load(bytes);
     }
 
@@ -53,18 +53,30 @@ impl Core
         self.execute(inst)
     }
 
-    pub fn register_file(&self) -> &RegisterFile { &self.register_file }
-    pub fn register_file_mut(&mut self) -> &mut RegisterFile { &mut self.register_file }
+    pub fn register_file(&self) -> &RegisterFile {
+        &self.register_file
+    }
+    pub fn register_file_mut(&mut self) -> &mut RegisterFile {
+        &mut self.register_file
+    }
 
-    pub fn program_space(&self) -> &mem::Space { &self.program_space }
-    pub fn program_space_mut(&mut self) -> &mut mem::Space { &mut self.program_space }
+    pub fn program_space(&self) -> &mem::Space {
+        &self.program_space
+    }
+    pub fn program_space_mut(&mut self) -> &mut mem::Space {
+        &mut self.program_space
+    }
 
-    pub fn memory(&self) -> &mem::Space { &self.memory }
-    pub fn memory_mut(&mut self) -> &mut mem::Space { &mut self.memory }
+    pub fn memory(&self) -> &mem::Space {
+        &self.memory
+    }
+    pub fn memory_mut(&mut self) -> &mut mem::Space {
+        &mut self.memory
+    }
 
     /// lhs = lhs + rhs
     pub fn add(&mut self, lhs: u8, rhs: u8) -> Result<(), Error> {
-        let sum = self.do_rdrr(lhs, rhs, |a,b| a+b)?;
+        let sum = self.do_rdrr(lhs, rhs, |a, b| a + b)?;
         self.update_sreg_arithmetic(sum)
     }
 
@@ -72,13 +84,13 @@ impl Core
         let carry = self.register_file.sreg_flag(sreg::CARRY_FLAG);
         let constant = if carry { 1 } else { 0 };
 
-        let sum = self.do_rdrr(lhs, rhs, |a,b| a+b+constant)?;
+        let sum = self.do_rdrr(lhs, rhs, |a, b| a + b + constant)?;
         self.update_sreg_arithmetic(sum)
     }
 
     /// lhs = lhs - rhs
     pub fn sub(&mut self, lhs: u8, rhs: u8) -> Result<(), Error> {
-        let diff = self.do_rdrr(lhs, rhs, |a,b| a-b)?;
+        let diff = self.do_rdrr(lhs, rhs, |a, b| a - b)?;
         self.update_sreg_arithmetic(diff)
     }
 
@@ -86,17 +98,17 @@ impl Core
         let carry = self.register_file.sreg_flag(sreg::CARRY_FLAG);
         let constant = if carry { 1 } else { 0 };
 
-        let diff = self.do_rdrr(lhs, rhs, |a,b| a-b-constant)?;
+        let diff = self.do_rdrr(lhs, rhs, |a, b| a - b - constant)?;
         self.update_sreg_arithmetic(diff)
     }
 
     pub fn subi(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
-        let diff = self.do_rdi(rd, |d| d-imm as u16)?;
+        let diff = self.do_rdi(rd, |d| d - imm as u16)?;
         self.update_sreg_arithmetic(diff)
     }
 
     pub fn sbci(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
-        let diff = self.do_rdi(rd, |d| d-imm as u16)?;
+        let diff = self.do_rdi(rd, |d| d - imm as u16)?;
         self.update_sreg_arithmetic(diff)
     }
 
@@ -114,32 +126,32 @@ impl Core
     }
 
     pub fn and(&mut self, lhs: u8, rhs: u8) -> Result<(), Error> {
-        self.do_rdrr(lhs, rhs, |a,b| a&b)?;
+        self.do_rdrr(lhs, rhs, |a, b| a & b)?;
         Ok(())
     }
 
     pub fn andi(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
-        self.do_rdi(rd, |d| d&imm as u16)?;
+        self.do_rdi(rd, |d| d & imm as u16)?;
         Ok(())
     }
 
     pub fn or(&mut self, lhs: u8, rhs: u8) -> Result<(), Error> {
-        self.do_rdrr(lhs, rhs, |a,b| a|b)?;
+        self.do_rdrr(lhs, rhs, |a, b| a | b)?;
         Ok(())
     }
 
     pub fn ori(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
-        self.do_rdi(rd, |d| d&imm as u16)?;
+        self.do_rdi(rd, |d| d & imm as u16)?;
         Ok(())
     }
 
     pub fn eor(&mut self, lhs: u8, rhs: u8) -> Result<(), Error> {
-        self.do_rdrr(lhs, rhs, |a,b| a^b)?;
+        self.do_rdrr(lhs, rhs, |a, b| a ^ b)?;
         Ok(())
     }
 
     pub fn com(&mut self, rd: u8) -> Result<(), Error> {
-        self.do_rd(rd, |a| 0xff-a)
+        self.do_rd(rd, |a| 0xff - a)
     }
 
     pub fn neg(&mut self, rd: u8) -> Result<(), Error> {
@@ -147,28 +159,28 @@ impl Core
     }
 
     pub fn mov(&mut self, lhs: u8, rhs: u8) -> Result<(), Error> {
-        self.do_rdrr(lhs, rhs, |_,b| b)?;
+        self.do_rdrr(lhs, rhs, |_, b| b)?;
         Ok(())
     }
 
     pub fn movw(&mut self, lhs: u8, rhs: u8) -> Result<(), Error> {
-        self.do_rdrr16(lhs, rhs, |_,b| b)
+        self.do_rdrr16(lhs, rhs, |_, b| b)
     }
 
     pub fn lsl(&mut self, rd: u8) -> Result<(), Error> {
-        self.do_rd(rd, |d| d<<1)
+        self.do_rd(rd, |d| d << 1)
     }
 
     pub fn lsr(&mut self, rd: u8) -> Result<(), Error> {
-        self.do_rd(rd, |d| d>>1)
+        self.do_rd(rd, |d| d >> 1)
     }
 
     pub fn inc(&mut self, rd: u8) -> Result<(), Error> {
-        self.do_rd(rd, |d| d+1)
+        self.do_rd(rd, |d| d + 1)
     }
 
     pub fn dec(&mut self, rd: u8) -> Result<(), Error> {
-        self.do_rd(rd, |d| d-1)
+        self.do_rd(rd, |d| d - 1)
     }
 
     pub fn push(&mut self, rd: u8) -> Result<(), Error> {
@@ -338,7 +350,7 @@ impl Core
         self.do_sreg_branch(k, |sreg| sreg.is_clear(sreg::INTERRUPT_FLAG))
     }
 
-    pub fn ret(&mut self) -> Result<(), Error>{
+    pub fn ret(&mut self) -> Result<(), Error> {
         let mut sp = self.register_file.gpr_pair_val(regs::SP_LO_NUM).unwrap();
 
         // pre-increment
@@ -362,7 +374,9 @@ impl Core
         unimplemented!();
     }
 
-    pub fn nop(&mut self) -> Result<(), Error> { Ok(()) }
+    pub fn nop(&mut self) -> Result<(), Error> {
+        Ok(())
+    }
 
     pub fn _in(&mut self, rd: u8, a: u8) -> Result<(), Error> {
         // There should only be 6-bits.
@@ -386,11 +400,11 @@ impl Core
     }
 
     pub fn sbi(&mut self, a: u8, b: u8) -> Result<(), Error> {
-        self.do_io_ab(a, b, |current, b| current | (1<<b))
+        self.do_io_ab(a, b, |current, b| current | (1 << b))
     }
 
     pub fn cbi(&mut self, a: u8, b: u8) -> Result<(), Error> {
-        self.do_io_ab(a, b, |current, b| current & !(1<<b))
+        self.do_io_ab(a, b, |current, b| current & !(1 << b))
     }
 
     fn st(&mut self, ptr: u8, reg: u8, variant: inst::Variant) -> Result<(), Error> {
@@ -432,9 +446,7 @@ impl Core
     }
 
     fn fetch(&mut self) -> Result<inst::Instruction, Error> {
-        let bytes = self.program_space.bytes()
-                                      .skip(self.pc as usize)
-                                      .map(|&a| a);
+        let bytes = self.program_space.bytes().skip(self.pc as usize).copied();
 
         Ok(inst::binary::read(bytes).unwrap())
     }
@@ -511,8 +523,9 @@ impl Core
     }
 
     fn do_rd<F>(&mut self, rd: u8, mut f: F) -> Result<(), Error>
-        where F: FnMut(u8) -> u8 {
-
+    where
+        F: FnMut(u8) -> u8,
+    {
         let rd_reg = self.register_file.gpr_mut(rd).unwrap();
         let rd_val = *rd_reg;
 
@@ -522,8 +535,9 @@ impl Core
 
     /// Returns the value of `rd` after execution.
     fn do_rdrr<F>(&mut self, rd: u8, rr: u8, mut f: F) -> Result<u16, Error>
-        where F: FnMut(u16,u16) -> u16 {
-
+    where
+        F: FnMut(u16, u16) -> u16,
+    {
         let rr_val = self.register_file.gpr(rr).unwrap() as u16;
         let rd_reg = self.register_file.gpr_mut(rd).unwrap();
         let rd_val = (*rd_reg) as u16;
@@ -534,8 +548,9 @@ impl Core
     }
 
     fn do_rdi<F>(&mut self, rd: u8, mut f: F) -> Result<u16, Error>
-        where F: FnMut(u16) -> u16 {
-
+    where
+        F: FnMut(u16) -> u16,
+    {
         let rd_reg = self.register_file.gpr_mut(rd).unwrap();
         let rd_val = *rd_reg as u16;
 
@@ -544,30 +559,33 @@ impl Core
         Ok(val)
     }
 
-    fn do_rdrr16<F>(&mut self, rd: u8, rr: u8,  mut f: F) -> Result<(), Error>
-        where F: FnMut(u16,u16) -> u16 {
-        assert!(rd % 2 == 0 && rr % 2 == 0,
-                "GPR pairs must be even numbers");
+    fn do_rdrr16<F>(&mut self, rd: u8, rr: u8, mut f: F) -> Result<(), Error>
+    where
+        F: FnMut(u16, u16) -> u16,
+    {
+        assert!(rd % 2 == 0 && rr % 2 == 0, "GPR pairs must be even numbers");
 
         let rr_val_lo = self.register_file.gpr(rr).unwrap() as u16;
-        let rr_val_hi = self.register_file.gpr(rr+1).unwrap() as u16;
+        let rr_val_hi = self.register_file.gpr(rr + 1).unwrap() as u16;
         let rr_val = (rr_val_hi << 8) | rr_val_lo;
 
         let rd_val_lo = self.register_file.gpr(rd).unwrap() as u16;
-        let rd_val_hi = self.register_file.gpr(rd+1).unwrap() as u16;
+        let rd_val_hi = self.register_file.gpr(rd + 1).unwrap() as u16;
         let rd_val = (rd_val_hi << 8) | rd_val_lo;
 
         let val = f(rd_val, rr_val);
-        let val_lo = (val & 0x0f) >> 0;
+        let val_lo = val & 0x0f;
         let val_hi = (val & 0xf0) >> 8;
 
         *self.register_file.gpr_mut(rd).unwrap() = val_lo as u8;
-        *self.register_file.gpr_mut(rd+1).unwrap() = val_hi as u8;
+        *self.register_file.gpr_mut(rd + 1).unwrap() = val_hi as u8;
         Ok(())
     }
 
     fn do_io_ab<F>(&mut self, a: u8, b: u8, mut f: F) -> Result<(), Error>
-        where F: FnMut(u8, u8) -> u8 {
+    where
+        F: FnMut(u8, u8) -> u8,
+    {
         let memory_address = (SRAM_IO_OFFSET + a as u16) as usize;
         let current_value = self.memory.get_u8(memory_address)?;
         let new_value = f(current_value, b);
@@ -576,9 +594,13 @@ impl Core
     }
 
     fn do_sreg_branch<F>(&mut self, k: i8, mut f: F) -> Result<(), Error>
-        where F: FnMut(sreg::SReg) -> bool {
+    where
+        F: FnMut(sreg::SReg) -> bool,
+    {
         let sreg = self.register_file.sreg.clone();
-        if f(sreg) { self.rjmp(k as i16)? };
+        if f(sreg) {
+            self.rjmp(k as i16)?
+        };
         Ok(())
     }
 
@@ -594,7 +616,7 @@ impl Core
 
     /// Updates the `V`, `C`, `H`, `N`, `Z`, and `S` status flags.
     fn update_sreg_cp(&mut self, rd_val: u16, rr_val: u16) {
-        let val = rd_val-rr_val;
+        let val = rd_val - rr_val;
 
         self.update_overflow_flag(val);
         self.update_negative_flag(val);
@@ -614,24 +636,28 @@ impl Core
 
     /// Sets the carry flag if necessary.
     fn update_carry_flag(&mut self, val: u16) {
-        let is_carry = (val&0b100000000)>0;
+        let is_carry = (val & 0b100000000) > 0;
         self.register_file.sreg.set(sreg::CARRY_FLAG, is_carry);
     }
 
     /// Sets the half carry flag if necessary.
     fn update_half_carry_flag(&mut self, val: u16) {
-        let is_hcarry = (val & 0b1000)>0;
-        self.register_file.sreg.set(sreg::HALF_CARRY_FLAG, is_hcarry);
+        let is_hcarry = (val & 0b1000) > 0;
+        self.register_file
+            .sreg
+            .set(sreg::HALF_CARRY_FLAG, is_hcarry);
     }
 
     /// Sets the negative flag based on `val`.
     fn update_negative_flag(&mut self, val: u16) {
-        let is_negative = (val & 0b10000000)>0;
-        self.register_file.sreg.set(sreg::NEGATIVE_FLAG, is_negative);
+        let is_negative = (val & 0b10000000) > 0;
+        self.register_file
+            .sreg
+            .set(sreg::NEGATIVE_FLAG, is_negative);
     }
 
     fn update_zero_flag(&mut self, val: u16) {
-        let is_zero = val==0;
+        let is_zero = val == 0;
         self.register_file.sreg.set(sreg::ZERO_FLAG, is_zero);
     }
 

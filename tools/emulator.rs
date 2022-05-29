@@ -16,8 +16,8 @@ fn main() {
     let mut mcu = avr::Mcu::new(core);
 
     let uart = avr::addons::Uart::new(
-        16000000, // CPU frequency
-        187000,   // Baud rate
+        16000000,                 // CPU frequency
+        187000,                   // Baud rate
         avr::io::Port::new(0x24), // Tx
         avr::io::Port::new(0x25), // Rx
     );
