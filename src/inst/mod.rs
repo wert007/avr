@@ -93,6 +93,8 @@ pub enum Instruction {
     Nop,
     Ret,
     Reti,
+    Sei,
+    Cli,
 }
 
 impl Instruction {

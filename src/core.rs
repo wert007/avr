@@ -381,6 +381,16 @@ impl Core {
         unimplemented!();
     }
 
+    pub fn sei(&mut self) -> Result<(), Error> {
+        self.register_file.sreg_flag_set(sreg::INTERRUPT_FLAG);
+        Ok(())
+    }
+
+    pub fn cli(&mut self) -> Result<(), Error> {
+        self.register_file.sreg_flag_clear(sreg::INTERRUPT_FLAG);
+        Ok(())
+    }
+
     pub fn nop(&mut self) -> Result<(), Error> {
         Ok(())
     }
@@ -494,6 +504,8 @@ impl Core {
             Instruction::Nop => self.nop(),
             Instruction::Ret => self.ret(),
             Instruction::Reti => self.reti(),
+            Instruction::Sei => self.sei(),
+            Instruction::Cli => self.cli(),
             Instruction::In(rd, a) => self._in(rd, a),
             Instruction::Out(a, rd) => self.out(a, rd),
             Instruction::Sbi(a, b) => self.sbi(a, b),

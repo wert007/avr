@@ -28,17 +28,14 @@ where
 }
 
 fn try_read16(bits: u16) -> Option<Instruction> {
-    let result = if bits == 0 {
-        Some(Instruction::Nop)
-    } else if bits == 0x9508 {
-        Some(Instruction::Ret)
-    } else if bits == 0x9518 {
-        Some(Instruction::Reti)
-    } else if bits == 0x95C8 {
-        // LPM (r0, Z implied).
-        Some(Instruction::Lpm(0, 30, false))
-    } else {
-        None
+    let result = match bits {
+        0 => Some(Instruction::Nop),
+        0x9508 => Some(Instruction::Ret),
+        0x9518 => Some(Instruction::Reti),
+        0x95C8 => Some(Instruction::Lpm(0, 30, false)),
+        0x9478 => Some(Instruction::Sei),
+        0x94F8 => Some(Instruction::Cli),
+        _ => None,
     };
 
     result
