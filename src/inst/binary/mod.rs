@@ -178,7 +178,13 @@ fn try_read_rdz(bits: u16) -> Option<Instruction> {
 /// `<ffff|kkkk|kkkk|kkkk>`.
 fn try_read_k16(bits: u16) -> Option<Instruction> {
     let opcode = (bits & 0xf000) >> 12;
-    let k = (bits & 0x0fff) as i16;
+    let k = bits & 0x0fff;
+    // Check if there is a need to extend the sign bits to 16 bit
+    let k = if k & 0x0800 != 0 { k | 0xf000 } else { k } as i16;
+
+    // Since we address using bytes instead of words (2 bytes, we need to shift
+    // k here.)
+    let k = k << 1;
 
     match opcode {
         0b1100 => Some(Instruction::Rjmp(k)),
