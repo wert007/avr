@@ -54,6 +54,7 @@ impl Core {
         let inst = self.fetch()?;
         let pc = self.pc;
 
+        self.update_clock()?;
 
         self.execute(inst)?;
         Ok((inst, pc))
@@ -766,5 +767,19 @@ impl Core {
         }
 
         self.register_file.set_gpr_pair(ptr, val);
+    }
+
+    /// This is like the hackiest clock, ever!
+    fn update_clock(&mut self) -> Result<(), Error> {
+        let clk_lo = self.memory().get_u16(0x105)? as u32;
+        let clk_hi = self.memory().get_u16(0x107)? as u32;
+        let clk = (clk_hi << 8) | clk_lo;
+
+        let clk = clk.wrapping_add(1);
+        let clk_lo = (clk & 0xff) as u16;
+        let clk_hi = (clk >> 8) as u16;
+        self.memory.set_u16(0x105, clk_lo)?;
+        self.memory.set_u16(0x107, clk_hi)?;
+        Ok(())
     }
 }
