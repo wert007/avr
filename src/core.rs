@@ -117,7 +117,10 @@ impl Core {
     }
 
     pub fn sbci(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
-        let diff = self.do_rdi(rd, |d| d.wrapping_sub(imm as _))?;
+        let carry = self.register_file.sreg_flag(sreg::CARRY_FLAG);
+        let constant = if carry { 1 } else { 0 };
+
+        let diff = self.do_rdi(rd, |d| d.wrapping_sub(imm as _).wrapping_sub(constant))?;
         self.update_sreg_arithmetic(diff)
     }
 
@@ -141,7 +144,11 @@ impl Core {
     }
 
     pub fn and(&mut self, lhs: u8, rhs: u8) -> Result<(), Error> {
-        self.do_rdrr(lhs, rhs, |a, b| a & b)?;
+        let result = self.do_rdrr(lhs, rhs, |a, b| a & b)?;
+
+        self.update_zero_flag(result);
+        self.update_negative_flag(result);
+        self.register_file.sreg_flag_clear(sreg::OVERFLOW_FLAG);
         Ok(())
     }
 
@@ -698,6 +705,7 @@ impl Core {
         self.register_file
             .sreg
             .set(sreg::NEGATIVE_FLAG, is_negative);
+        self.register_file.sreg.set(sreg::S_FLAG, !is_negative);
     }
 
     fn update_zero_flag(&mut self, val: u16) {
