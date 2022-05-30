@@ -51,6 +51,7 @@ fn try_read16(bits: u16) -> Option<Instruction> {
         .or_else(|| self::try_read_movw(bits))
         .or_else(|| self::try_read_relcondbr(bits))
         .or_else(|| self::try_read_adiw(bits))
+        .or_else(|| self::try_read_sbrs(bits))
 }
 
 pub fn try_read32(bits: u32) -> Option<Instruction> {
@@ -153,6 +154,18 @@ fn try_read_io_ab(bits: u16) -> Option<Instruction> {
         0b10011010 => Some(Instruction::Sbi(a, b)),
         0b10011011 => Some(Instruction::Sbis(a, b)),
         0b10011000 => Some(Instruction::Cbi(a, b)),
+        _ => None,
+    }
+}
+
+/// SBRS: 1111 111r rrrr 0bbb
+fn try_read_sbrs(bits: u16) -> Option<Instruction> {
+    let opcode = (bits & 0xfe00) >> 8 | (bits & 0x8) >> 3;
+    let r = ((bits & 0x01f0) >> 4) as u8;
+    let b = (bits & 0x7) as u8;
+
+    match opcode {
+        0b11111110 => Some(Instruction::Sbrs(r, b)),
         _ => None,
     }
 }

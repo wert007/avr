@@ -55,6 +55,7 @@ pub enum Instruction {
     Sbis(u8, u8),
     /// Clear bit in IO register.
     Cbi(u8, u8),
+    Sbrs(Gpr, u8),
 
     Jmp(u32),
     Call(u32),

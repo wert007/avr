@@ -419,6 +419,14 @@ impl Core {
         Ok(())
     }
 
+    pub fn sbrs(&mut self, r: u8, b: u8) -> Result<(), Error> {
+        let value = self.register_file.gpr(r)?;
+        if value & (1 << b) != 0 {
+            self.pc += self.size_of_next_instruction as u32;
+        }
+        Ok(())
+    }
+
     pub fn sts(&mut self, rd: u8, k: u16) -> Result<(), Error> {
         let value = self.register_file.gpr(rd).expect("Could not find register");
         self.memory.set_u8(k as usize, value)?;
@@ -579,6 +587,7 @@ impl Core {
             Instruction::Reti => self.reti(),
             Instruction::Sei => self.sei(),
             Instruction::Cli => self.cli(),
+            Instruction::Sbrs(r, b) => self.sbrs(r, b),
             Instruction::In(rd, a) => self._in(rd, a),
             Instruction::Out(a, rd) => self.out(a, rd),
             Instruction::Sbi(a, b) => self.sbi(a, b),
