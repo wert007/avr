@@ -161,15 +161,12 @@ fn try_read_io_ab(bits: u16) -> Option<Instruction> {
 /// `<1001|000d|dddd|010f>`
 /// `f` is postincrement bit.
 fn try_read_rdz(bits: u16) -> Option<Instruction> {
-    let opcode = (bits & 0b1111111000000000) >> 9;
-    let sub_op = bits & 0b1;
-
-    let rd = ((bits & 0x1f0) >> 4) as u8;
-
-    let postinc = sub_op == 1;
+    let opcode = ((bits >> 5) & 0b11111110000) | (bits & 0b1111);
+    let register = ((bits >> 4) & 0b11111) as u8;
 
     match opcode {
-        0b1001000 => Some(Instruction::Lpm(rd, 30, postinc)),
+        0b10010000100 => Some(Instruction::Lpm(register, 30, false)),
+        0b10010000101 => Some(Instruction::Lpm(register, 30, true)),
         _ => None,
     }
 }
