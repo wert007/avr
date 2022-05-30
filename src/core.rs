@@ -23,6 +23,8 @@ pub struct Core {
 
     /// The program counter.
     pub pc: u32,
+
+    size_of_next_instruction: u8,
 }
 
 impl Core {
@@ -36,6 +38,7 @@ impl Core {
             memory: mem::Space::new(M::memory_size()),
 
             pc: 0,
+            size_of_next_instruction: 0,
         }
     }
 
@@ -245,12 +248,23 @@ impl Core {
         Ok(())
     }
 
-    pub fn cpc(&mut self, _rd: u8, _rr: u8) -> Result<(), Error> {
-        unimplemented!();
+    pub fn cpc(&mut self, rd: u8, rr: u8) -> Result<(), Error> {
+        let rd_val = self.register_file.gpr(rd)? as u16;
+        let rr_val = self.register_file.gpr(rr)? as u16;
+        let c = self.register_file.sreg.is_set(sreg::CARRY_FLAG);
+        let c = if c { 1 } else { 0 };
+        let value = rd_val.wrapping_sub(rr_val).wrapping_sub(c);
+        self.update_sreg_arithmetic(value)?;
+        Ok(())
     }
 
-    pub fn cpse(&mut self, _rd: u8, _rr: u8) -> Result<(), Error> {
-        unimplemented!();
+    pub fn cpse(&mut self, rd: u8, rr: u8) -> Result<(), Error> {
+        let rd_value = self.register_file.gpr(rd)?;
+        let rr_value = self.register_file.gpr(rr)?;
+        if rd_value == rr_value {
+            self.pc += self.size_of_next_instruction as u32;
+        }
+        Ok(())
     }
 
     pub fn cpi(&mut self, _rd: u8, _imm: u8) -> Result<(), Error> {
@@ -392,10 +406,6 @@ impl Core {
         Ok(())
     }
 
-    pub fn lpm(&mut self, _rd: u8, _z: u8, _postinc: bool) -> Result<(), Error> {
-        unimplemented!();
-    }
-
     pub fn sei(&mut self) -> Result<(), Error> {
         self.register_file.sreg_flag_set(sreg::INTERRUPT_FLAG);
         Ok(())
@@ -418,6 +428,18 @@ impl Core {
             .register_file
             .gpr_mut(rd)
             .expect("Could not find register") = value;
+        Ok(())
+    }
+
+    pub fn lpm(&mut self, rd: u8, rz: u8, postinc: bool) -> Result<(), Error> {
+        assert_eq!(rz, 30);
+        let z = self.register_file.gpr_pair_val(rz)?;
+        let value = self.program_space.get_u8(z as _)?;
+        *self.register_file.gpr_mut(rd)? = value;
+        if postinc {
+            let z = z + 1;
+            self.register_file.set_gpr_pair(rz, z);
+        }
         Ok(())
     }
 
@@ -493,9 +515,18 @@ impl Core {
     }
 
     fn fetch(&mut self) -> Result<inst::Instruction, Error> {
-        let bytes = self.program_space.bytes().skip(self.pc as usize).copied();
+        // println!("PC = {:3X}", self.pc);
 
-        Ok(inst::binary::read(bytes).unwrap())
+        let mut bytes = self.program_space.bytes().skip(self.pc as usize).copied();
+
+        let instruction = inst::binary::read(&mut bytes)?;
+
+        // println!("PC = {:3X}", self.pc + instruction.size() as u32);
+
+        let possible_next_instruction = inst::binary::read(&mut bytes)?;
+        self.size_of_next_instruction = possible_next_instruction.size();
+
+        Ok(instruction)
     }
 
     fn execute(&mut self, inst: inst::Instruction) -> Result<(), Error> {
