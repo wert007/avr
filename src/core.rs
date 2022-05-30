@@ -1,9 +1,9 @@
-use crate::chips::Chip;
 use crate::inst;
 use crate::mem;
 use crate::regs::{self, RegisterFile};
 use crate::sreg;
 use crate::Error;
+use crate::{chips::Chip, Instruction};
 
 /// The address that register space is mapped to in SRAM.
 pub const SRAM_REGISTER_OFFSET: u16 = 0;
@@ -199,8 +199,8 @@ impl Core {
     }
 
     pub fn push(&mut self, rd: u8) -> Result<(), Error> {
-        let rd_val = self.register_file.gpr_val(rd).unwrap();
-        let sp = self.register_file.gpr_mut(regs::SP_LO_NUM).unwrap();
+        let rd_val = self.register_file.gpr(rd)?;
+        let sp = self.register_file.gpr_mut(regs::SP_LO_NUM)?;
 
         assert!(*sp > 0, "stack overflow");
 
@@ -211,9 +211,9 @@ impl Core {
     }
 
     pub fn pop(&mut self, rd: u8) -> Result<(), Error> {
-        let rd_val = self.register_file.gpr_val(rd).unwrap();
+        let rd_val = self.register_file.gpr(rd)?;
 
-        let sp = self.register_file.gpr_mut(regs::SP_LO_NUM).unwrap();
+        let sp = self.register_file.gpr_mut(regs::SP_LO_NUM)?;
         *sp += 1;
 
         assert!(*sp > 0, "stack overflow");
@@ -231,8 +231,8 @@ impl Core {
     }
 
     pub fn cp(&mut self, rd: u8, rr: u8) -> Result<(), Error> {
-        let rd_val = self.register_file.gpr_val(rd).unwrap() as u16;
-        let rr_val = self.register_file.gpr_val(rr).unwrap() as u16;
+        let rd_val = self.register_file.gpr(rd)? as u16;
+        let rr_val = self.register_file.gpr(rr)? as u16;
 
         self.update_sreg_cp(rd_val, rr_val);
         Ok(())
@@ -434,7 +434,7 @@ impl Core {
         assert!(a <= 0b111111);
 
         let offset = SRAM_IO_OFFSET + a as u16;
-        let reg_val = self.register_file.gpr_val(rd).unwrap();
+        let reg_val = self.register_file.gpr(rd)?;
 
         self.memory.set_u8(offset as usize, reg_val)
     }
@@ -448,8 +448,8 @@ impl Core {
     }
 
     fn st(&mut self, ptr: u8, reg: u8, variant: inst::Variant) -> Result<(), Error> {
-        let addr = self.register_file.gpr_pair_val(ptr).unwrap();
-        let val = self.register_file.gpr_val(reg).unwrap();
+        let addr = self.register_file.gpr_pair_val(ptr)?;
+        let val = self.register_file.gpr(reg)?;
 
         self.memory.set_u8(addr as usize, val)?;
 
@@ -458,30 +458,30 @@ impl Core {
     }
 
     fn ld(&mut self, reg: u8, ptr: u8, variant: inst::Variant) -> Result<(), Error> {
-        let addr = self.register_file.gpr_pair_val(ptr).unwrap();
+        let addr = self.register_file.gpr_pair_val(ptr)?;
 
         // Load from data spacself.brid(k),
         let val = self.memory.get_u8(addr as usize)?;
         // Store to register.
-        *self.register_file.gpr_mut(reg).unwrap() = val;
+        *self.register_file.gpr_mut(reg)? = val;
 
         self.handle_ld_st_variant(ptr, variant);
         Ok(())
     }
 
     fn std(&mut self, ptr: u8, imm: u8, reg: u8) -> Result<(), Error> {
-        let addr = self.register_file.gpr_pair_val(ptr).unwrap() + imm as u16;
-        let val = self.register_file.gpr_val(reg).unwrap();
+        let addr = self.register_file.gpr_pair_val(ptr)? + imm as u16;
+        let val = self.register_file.gpr(reg)?;
 
         self.memory.set_u8(addr as usize, val)
     }
 
     fn ldd(&mut self, reg: u8, ptr: u8, imm: u8) -> Result<(), Error> {
-        let addr = self.register_file.gpr_pair_val(ptr).unwrap() + imm as u16;
+        let addr = self.register_file.gpr_pair_val(ptr)? + imm as u16;
 
         let val = self.memory.get_u8(addr as usize)?;
 
-        *self.register_file.gpr_mut(reg).unwrap() = val;
+        *self.register_file.gpr_mut(reg)? = val;
         Ok(())
     }
 
@@ -492,8 +492,6 @@ impl Core {
     }
 
     fn execute(&mut self, inst: inst::Instruction) -> Result<(), Error> {
-        use inst::Instruction;
-
         self.pc += inst.size() as u32;
 
         match inst {
