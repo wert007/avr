@@ -119,6 +119,12 @@ impl Core {
         self.update_sreg_arithmetic(diff)
     }
 
+    pub fn sbiw(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
+        let val = self.register_file.gpr_pair_val(rd)?.wrapping_sub(imm as _);
+        self.register_file.set_gpr_pair(rd, val);
+        self.update_sreg_arithmetic(val)
+    }
+
     /// R1:R0 = Rd * Rr
     pub fn mul(&mut self, rd: u8, rr: u8) -> Result<(), Error> {
         let product = (rd as u16) * (rr as u16);

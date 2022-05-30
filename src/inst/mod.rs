@@ -36,6 +36,7 @@ pub enum Instruction {
     Adc(Gpr, Gpr),
     Sub(Gpr, Gpr),
     Sbc(Gpr, Gpr),
+    Sbiw(Gpr, u8),
     Mul(Gpr, Gpr),
     And(Gpr, Gpr),
     Or(Gpr, Gpr),
