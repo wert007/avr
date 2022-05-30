@@ -24,7 +24,7 @@ where
         return Ok(i);
     }
 
-    Err(Error::UnknownInstruction)
+    Err(Error::UnknownInstruction(bits32))
 }
 
 fn try_read16(bits: u16) -> Option<Instruction> {

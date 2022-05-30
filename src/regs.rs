@@ -1,4 +1,4 @@
-use crate::SReg;
+use crate::{Error, SReg};
 
 // TODO: s/addr/num
 
@@ -33,33 +33,36 @@ impl RegisterFile {
     }
 
     /// Gets a register, or `None` if it doesn't exist.
-    pub fn gpr(&self, addr: u8) -> Option<u8> {
-        self.registers.get(addr as usize).map(|r| r.value)
+    pub fn gpr(&self, addr: u8) -> Result<u8, Error> {
+        self.registers
+            .get(addr as usize)
+            .map(|r| r.value)
+            .ok_or(Error::RegisterDoesNotExist(addr))
     }
 
     /// Gets a mutable register, or `None` if it doesn't exist.
-    pub fn gpr_mut(&mut self, addr: u8) -> Option<&mut u8> {
-        self.registers.get_mut(addr as usize).map(|r| &mut r.value)
+    pub fn gpr_mut(&mut self, addr: u8) -> Result<&mut u8, Error> {
+        self.registers
+            .get_mut(addr as usize)
+            .map(|r| &mut r.value)
+            .ok_or(Error::RegisterDoesNotExist(addr))
     }
 
-    // TODO: remove, unnecessary
-    pub fn gpr_val(&self, addr: u8) -> Option<u8> {
-        self.gpr(addr)
+    pub fn gpr_pair(&self, addr: u8) -> Result<(u8, u8), Error> {
+        if addr % 2 != 0 {
+            return Err(Error::RegisterPairOdd(addr));
+        }
+
+        let lo = self.gpr(addr)?;
+        let hi = self.gpr(addr + 1)?;
+
+        Ok((lo, hi))
     }
 
-    pub fn gpr_pair(&self, addr: u8) -> Option<(u8, u8)> {
-        assert!(addr % 2 == 0, "GPR pairs must be even");
-
-        let lo = self.gpr(addr).unwrap();
-        let hi = self.gpr(addr + 1).unwrap();
-
-        Some((lo, hi))
-    }
-
-    pub fn gpr_pair_val(&self, addr: u8) -> Option<u16> {
-        let (lo, hi) = self.gpr_pair(addr).unwrap();
+    pub fn gpr_pair_val(&self, addr: u8) -> Result<u16, Error> {
+        let (lo, hi) = self.gpr_pair(addr)?;
         let val = ((hi as u16) << 8) | lo as u16;
-        Some(val)
+        Ok(val)
     }
 
     pub fn set_gpr_pair(&mut self, low: u8, val: u16) {
