@@ -80,19 +80,19 @@ impl Core {
         self.update_sreg_arithmetic(sum)
     }
 
-    /// lhs = lhs + rhs
-    pub fn adiw(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
-        let val = self.register_file.gpr_pair_val(rd)? + imm as u16;
-        self.register_file.set_gpr_pair(rd, val);
-        self.update_sreg_arithmetic(val)
-    }
-
     pub fn adc(&mut self, lhs: u8, rhs: u8) -> Result<(), Error> {
         let carry = self.register_file.sreg_flag(sreg::CARRY_FLAG);
         let constant = if carry { 1 } else { 0 };
 
         let sum = self.do_rdrr(lhs, rhs, |a, b| a + b + constant)?;
         self.update_sreg_arithmetic(sum)
+    }
+
+    /// lhs = lhs + rhs
+    pub fn adiw(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
+        let val = self.register_file.gpr_pair_val(rd)? + imm as u16;
+        self.register_file.set_gpr_pair(rd, val);
+        self.update_sreg_arithmetic(val)
     }
 
     /// lhs = lhs - rhs
@@ -117,6 +117,12 @@ impl Core {
     pub fn sbci(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
         let diff = self.do_rdi(rd, |d| d.wrapping_sub(imm as _))?;
         self.update_sreg_arithmetic(diff)
+    }
+
+    pub fn sbiw(&mut self, rd: u8, imm: u8) -> Result<(), Error> {
+        let val = self.register_file.gpr_pair_val(rd)?.wrapping_sub(imm as _);
+        self.register_file.set_gpr_pair(rd, val);
+        self.update_sreg_arithmetic(val)
     }
 
     /// R1:R0 = Rd * Rr
@@ -503,10 +509,11 @@ impl Core {
             Instruction::Cpi(rd, k) => self.cpi(rd, k),
             Instruction::Ldi(rd, k) => self.ldi(rd, k),
             Instruction::Add(rd, rr) => self.add(rd, rr),
-            Instruction::Adiw(rd, k) => self.adiw(rd, k),
             Instruction::Adc(rd, rr) => self.adc(rd, rr),
+            Instruction::Adiw(rd, k) => self.adiw(rd, k),
             Instruction::Sub(rd, rr) => self.sub(rd, rr),
             Instruction::Sbc(rd, rr) => self.sbc(rd, rr),
+            Instruction::Sbiw(rd, k) => self.sbiw(rd, k),
             Instruction::Mul(rd, rr) => self.mul(rd, rr),
             Instruction::And(rd, rr) => self.and(rd, rr),
             Instruction::Or(rd, rr) => self.or(rd, rr),

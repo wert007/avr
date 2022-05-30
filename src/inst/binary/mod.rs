@@ -342,6 +342,7 @@ fn try_read_relcondbr(bits: u16) -> Option<Instruction> {
 }
 
 /// ADIW: 1001 0110 KKdd KKKK
+/// SBIW: 1001 0111 KKdd KKKK
 fn try_read_adiw(bits: u16) -> Option<Instruction> {
     let opcode = bits >> 8;
     let k = (bits >> 6) & 0b11 | bits & 0b1111;
@@ -351,6 +352,7 @@ fn try_read_adiw(bits: u16) -> Option<Instruction> {
 
     match opcode {
         0b1001_0110 => Some(Instruction::Adiw(d, k)),
+        0b1001_0111 => Some(Instruction::Sbiw(d, k)),
         _ => None,
     }
 }
