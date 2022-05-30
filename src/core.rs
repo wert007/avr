@@ -136,16 +136,17 @@ impl Core {
     }
 
     /// R1:R0 = Rd * Rr
-    pub fn mul(&mut self, rd: u8, rr: u8) -> Result<(), Error> {
-        let product = (rd as u16) * (rr as u16);
+    pub fn mul(&mut self, _rd: u8, _rr: u8) -> Result<(), Error> {
+        panic!("This seems so so wrong!");
+        // let product = (rd as u16) * (rr as u16);
 
-        let lo = (product & 0x00ff) as u8;
-        let hi = ((product & 0xff00) >> 8) as u8;
+        // let lo = (product & 0x00ff) as u8;
+        // let hi = ((product & 0xff00) >> 8) as u8;
 
-        *self.register_file.gpr_mut(0).unwrap() = lo;
-        *self.register_file.gpr_mut(1).unwrap() = hi;
+        // *self.register_file.gpr_mut(0).unwrap() = lo;
+        // *self.register_file.gpr_mut(1).unwrap() = hi;
 
-        self.update_sreg_arithmetic(product)
+        // self.update_sreg_arithmetic(product)
     }
 
     pub fn and(&mut self, lhs: u8, rhs: u8) -> Result<(), Error> {
