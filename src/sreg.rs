@@ -1,12 +1,20 @@
 use crate::regs::Register;
 
+/// C
 pub const CARRY_FLAG: u8 = 1 << 0;
+/// Z
 pub const ZERO_FLAG: u8 = 1 << 1;
+/// N
 pub const NEGATIVE_FLAG: u8 = 1 << 2;
+/// V
 pub const OVERFLOW_FLAG: u8 = 1 << 3;
+/// S
 pub const S_FLAG: u8 = 1 << 4;
+/// H
 pub const HALF_CARRY_FLAG: u8 = 1 << 5;
+/// T
 pub const TRANSFER_FLAG: u8 = 1 << 6;
+/// I
 pub const INTERRUPT_FLAG: u8 = 1 << 7;
 
 /// The AVR status register.

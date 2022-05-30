@@ -4,6 +4,7 @@ use std;
 pub type Address = u16;
 
 /// A memory space.
+#[derive(Clone)]
 pub struct Space {
     data: Vec<u8>,
 }

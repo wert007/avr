@@ -20,6 +20,7 @@ pub struct Core {
 
     program_space: mem::Space,
     memory: mem::Space,
+    pub io_ports: Vec<crate::io::Port>,
 
     /// The program counter.
     pub pc: u32,
@@ -36,7 +37,7 @@ impl Core {
             register_file: M::register_file(),
             program_space: mem::Space::new(M::flash_size()),
             memory: mem::Space::new(M::memory_size()),
-
+            io_ports: M::io_ports(),
             pc: 0,
             size_of_next_instruction: 0,
         }
