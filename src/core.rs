@@ -191,11 +191,11 @@ impl Core {
     }
 
     pub fn inc(&mut self, rd: u8) -> Result<(), Error> {
-        self.do_rd(rd, |d| d + 1)
+        self.do_rd(rd, |d| d.wrapping_add(1))
     }
 
     pub fn dec(&mut self, rd: u8) -> Result<(), Error> {
-        self.do_rd(rd, |d| d - 1)
+        self.do_rd(rd, |d| d.wrapping_sub(1))
     }
 
     pub fn push(&mut self, rd: u8) -> Result<(), Error> {
