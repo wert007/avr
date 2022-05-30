@@ -281,7 +281,7 @@ impl Core {
     }
 
     pub fn call(&mut self, k: u32) -> Result<(), Error> {
-        let return_addr = (self.pc + 4) as u16; // after CALL instruction.
+        let return_addr = self.pc as u16; // after CALL instruction.
 
         // push return address onto stack
         let mut sp = self.register_file.gpr_pair_val(regs::SP_LO_NUM).unwrap();
