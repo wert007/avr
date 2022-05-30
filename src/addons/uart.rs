@@ -1,6 +1,6 @@
-use crate::io;
 use crate::Addon;
 use crate::Core;
+use crate::{io, Error, Instruction};
 
 pub struct Uart {
     /// The baud rate (bits/second)
@@ -41,12 +41,13 @@ impl Uart {
 }
 
 impl Addon for Uart {
-    fn tick(&mut self, core: &mut Core) {
+    fn tick(&mut self, core: &mut Core, _: Instruction, _: u32) -> Result<(), Error> {
         self.ticks_until_next_bit -= 1;
 
         if self.ticks_until_next_bit == 0 {
             self.process_bit(core);
             self.ticks_until_next_bit = self.ticks_between_bits;
         }
+        Ok(())
     }
 }

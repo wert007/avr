@@ -46,11 +46,13 @@ impl Core {
         self.program_space.load(bytes);
     }
 
-    pub fn tick(&mut self) -> Result<(), Error> {
+    pub fn tick(&mut self) -> Result<(Instruction, u32), Error> {
         let inst = self.fetch()?;
+        let pc = self.pc;
 
-        println!("Executing {:?}", inst);
-        self.execute(inst)
+
+        self.execute(inst)?;
+        Ok((inst, pc))
     }
 
     pub fn register_file(&self) -> &RegisterFile {

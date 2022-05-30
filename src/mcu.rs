@@ -19,10 +19,10 @@ impl Mcu {
     }
 
     pub fn tick(&mut self) -> Result<(), Error> {
-        self.core.tick()?;
+        let (inst, pc) = self.core.tick()?;
 
         for addon in self.addons.iter_mut() {
-            addon.tick(&mut self.core);
+            let _ = addon.tick(&mut self.core, inst, pc);
         }
 
         Ok(())
