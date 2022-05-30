@@ -469,11 +469,21 @@ impl Core {
     }
 
     pub fn sbi(&mut self, a: u8, b: u8) -> Result<(), Error> {
-        self.do_io_ab(a, b, |current, b| current | (1 << b))
+        self.do_io_ab(a, b, |_, current, b| current | (1 << b))
+    }
+
+    pub fn sbis(&mut self, a: u8, b: u8) -> Result<(), Error> {
+        // TODO: Not so sure about this implementation.
+        self.do_io_ab(a, b, |s, current, b| {
+            if current == b {
+                s.pc += s.size_of_next_instruction as u32;
+            }
+            current
+        })
     }
 
     pub fn cbi(&mut self, a: u8, b: u8) -> Result<(), Error> {
-        self.do_io_ab(a, b, |current, b| current & !(1 << b))
+        self.do_io_ab(a, b, |_, current, b| current & !(1 << b))
     }
 
     fn st(&mut self, ptr: u8, reg: u8, variant: inst::Variant) -> Result<(), Error> {
@@ -569,6 +579,7 @@ impl Core {
             Instruction::In(rd, a) => self._in(rd, a),
             Instruction::Out(a, rd) => self.out(a, rd),
             Instruction::Sbi(a, b) => self.sbi(a, b),
+            Instruction::Sbis(a, b) => self.sbis(a, b),
             Instruction::Cbi(a, b) => self.cbi(a, b),
             Instruction::Jmp(k) => self.jmp(k),
             Instruction::Call(k) => self.call(k),
@@ -666,11 +677,11 @@ impl Core {
 
     fn do_io_ab<F>(&mut self, a: u8, b: u8, mut f: F) -> Result<(), Error>
     where
-        F: FnMut(u8, u8) -> u8,
+        F: FnMut(&mut Self, u8, u8) -> u8,
     {
         let memory_address = (SRAM_IO_OFFSET + a as u16) as usize;
         let current_value = self.memory.get_u8(memory_address)?;
-        let new_value = f(current_value, b);
+        let new_value = f(self, current_value, b);
 
         self.memory.set_u8(memory_address, new_value)
     }

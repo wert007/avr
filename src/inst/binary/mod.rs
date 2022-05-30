@@ -141,8 +141,9 @@ fn try_read_rda(bits: u16) -> Option<Instruction> {
     }
 }
 
-/// CBI: 1001 1000 AAAA Abbb
-/// SBI: 1001 1010 AAAA Abbb
+/// CBI:  1001 1000 AAAA Abbb
+/// SBI:  1001 1010 AAAA Abbb
+/// SBIS: 1001 1011 AAAA Abbb
 fn try_read_io_ab(bits: u16) -> Option<Instruction> {
     let opcode = (bits & 0xff00) >> 8;
     let a = ((bits & 0b0000000011111000) >> 3) as u8;
@@ -150,6 +151,7 @@ fn try_read_io_ab(bits: u16) -> Option<Instruction> {
 
     match opcode {
         0b10011010 => Some(Instruction::Sbi(a, b)),
+        0b10011011 => Some(Instruction::Sbis(a, b)),
         0b10011000 => Some(Instruction::Cbi(a, b)),
         _ => None,
     }

@@ -51,6 +51,8 @@ pub enum Instruction {
     Out(u8, Gpr),
     /// Set bit in IO register.
     Sbi(u8, u8),
+    /// Skip if bit in IO register.
+    Sbis(u8, u8),
     /// Clear bit in IO register.
     Cbi(u8, u8),
 
